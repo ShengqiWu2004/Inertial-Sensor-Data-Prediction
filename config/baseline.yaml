@@ -1,0 +1,11 @@
+data_dir: "./dataset"
+window_size: 100
+predict_size: 2
+epochs: 100  #60
+batch_size: 20      #20
+model_type: "cnn"         # Options: "cnn", "transfer"
+criterion: "mse"
+pretrained_weights: null  # Provide path if using transfer model
+learning_rate: 0.001
+early_stopping_patience: 10
+model_save_path: "output_model/best_model.pth"
