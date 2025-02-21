@@ -48,13 +48,3 @@ class CNNModel(nn.Module):
         x = self.final_conv(x)     # shape: (batch, num_features, predict_size)
         x = x.permute(0, 2, 1)       # Back to (batch, predict_size, num_features)
         return x
-
-if __name__ == "__main__":
-    # Simple test run for the CNN model.
-    window_size = 50
-    predict_size = 10
-    num_features = 6
-    model = CNNModel(window_size, predict_size, num_features)
-    dummy_input = torch.randn(8, window_size, num_features)  # batch of 8
-    output = model(dummy_input)
-    print("Output shape:", output.shape)  # Expected: (8, predict_size, num_features)

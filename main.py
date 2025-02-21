@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 from data_loader import load_and_segment_data, SensorDataset, train_val_test_split
 from models.cnn_model import CNNModel
 from models.lstm import LSTMModel
+from models.rnn import VanillaRNNModel
 from train import train_model, eval_model
 from util import plot_losses
 
@@ -33,7 +34,10 @@ def main():
     )
     
     # Split data into train, validation, and test sets.
-    X_train, X_val, X_test, y_train, y_val, y_test,_,_,_ = train_val_test_split(
+    # X_train, X_val, X_test, y_train, y_val, y_test,_,_,_ = train_val_test_split(
+    #     X, y, labels, test_size=0.2, val_size=0.4, random_state=42
+    # )
+    X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(
         X, y, labels, test_size=0.2, val_size=0.4, random_state=42
     )
     
@@ -53,6 +57,8 @@ def main():
                      num_features=6)
     elif config["model_type"] == "lstm":
         model = LSTMModel(input_size=6,hidden_size=config.get('hidden_size', 64), num_layers=config.get('num_layers', 2),predict_size=config['predict_size'])
+    elif config["model_type"] == "rnn":
+        model = VanillaRNNModel(input_size=6, hidden_size=config.get('hidden_size', 64), num_layers=config.get('num_layers', 2), predict_size=config['predict_size'])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     

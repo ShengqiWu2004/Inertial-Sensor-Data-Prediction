@@ -207,4 +207,4 @@ def train_val_test_split(segments, targets, labels, test_size=0.2, val_size=0.4,
         X_train_val, y_train_val, labels_train_val, test_size=val_fraction, random_state=random_state, stratify=labels_train_val
     )
     
-    return X_train, X_val, X_test, y_train, y_val, y_test, labels_train, labels_val, labels_test
+    return X_train, X_val, X_test, y_train, y_val, y_test #  , labels_train, labels_val, labels_test
