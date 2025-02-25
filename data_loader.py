@@ -8,9 +8,9 @@ from torch.utils.data import Dataset
 from collections import defaultdict
 
 # These are the normal categories that will be balanced equally.
-CATEGORY_KEYS = ['downstair', 'jogging', 'walking', 'upstair']
+CATEGORY_KEYS = ['falldown','shaking','downstair', 'jogging', 'walking', 'upstair']
 # This is the special category that will be sampled with a controlled ratio.
-SPECIAL_CATEGORY = 'falldown'
+#SPECIAL_CATEGORYS = ['falldown','shaking']
 
 
 def load_and_segment_data(data_dir, window_size, predict_size, balance_config, mode="train"):
@@ -42,7 +42,7 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
     segments_by_cat = defaultdict(list)
     targets_by_cat = defaultdict(list)
     
-    step_size = int(0.8 * window_size)
+    step_size = int(0.2 * window_size)
     seg_length = window_size + predict_size
     
     # Process each file in the directory
@@ -62,8 +62,8 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
         # Determine the category from the filename (case-insensitive)
         file_lower = file.lower()
         category = None
-        if SPECIAL_CATEGORY in file_lower:
-            category = SPECIAL_CATEGORY
+        # if SPECIAL_CATEGORY in file_lower:
+        #     category = SPECIAL_CATEGORY
         for key in CATEGORY_KEYS:
             if key in file_lower:
                 category = key
@@ -110,18 +110,19 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
             balanced_labels += [cat] * seg.shape[0]
     
     # For the special category, sample a fraction specified by falldown_ratio
-    if SPECIAL_CATEGORY in segments_by_cat:
-        seg = segments_by_cat[SPECIAL_CATEGORY]
-        targ = targets_by_cat[SPECIAL_CATEGORY]
-        ratio = balance_config.get('falldown_ratio', 1.0)  # default to 100% if not specified
-        num_samples = int(seg.shape[0] * ratio)
-        if num_samples < seg.shape[0]:
-            idx = np.random.choice(seg.shape[0], num_samples, replace=False)
-            seg = seg[idx]
-            targ = targ[idx]
-        balanced_segments.append(seg)
-        balanced_targets.append(targ)
-        balanced_labels += [SPECIAL_CATEGORY] * seg.shape[0]
+    # for spc in SPECIAL_CATEGORYS:
+    #     if spc in segments_by_cat:
+    #         seg = segments_by_cat[spc]
+    #         targ = targets_by_cat[spc]
+    #         ratio = balance_config.get('falldown_ratio', 1.0)  # default to 100% if not specified
+    #         num_samples = int(seg.shape[0] * ratio)
+    #         if num_samples < seg.shape[0]:
+    #             idx = np.random.choice(seg.shape[0], num_samples, replace=False)
+    #             seg = seg[idx]
+    #             targ = targ[idx]
+    #         balanced_segments.append(seg)
+    #         balanced_targets.append(targ)
+    #         balanced_labels += [spc] * seg.shape[0]
     
     # Concatenate all the balanced segments and shuffle the overall order.
     if len(balanced_segments) == 0:
@@ -176,7 +177,7 @@ class SensorDataset(Dataset):
             self.scaler = scaler
         self.segments = torch.tensor(segments, dtype=torch.float32)
         self.targets = torch.tensor(targets, dtype=torch.float32)
-        self.labels = labels  # optional; can be None
+        self.labels = labels
 
     def __len__(self):
         return len(self.segments)
@@ -207,4 +208,4 @@ def train_val_test_split(segments, targets, labels, test_size=0.2, val_size=0.4,
         X_train_val, y_train_val, labels_train_val, test_size=val_fraction, random_state=random_state, stratify=labels_train_val
     )
     
-    return X_train, X_val, X_test, y_train, y_val, y_test #  , labels_train, labels_val, labels_test
+    return X_train, X_val, X_test, y_train, y_val, y_test, labels_train, labels_val, labels_test

@@ -7,5 +7,16 @@ model_type: "cnn"         # Options: "cnn", "transfer"
 criterion: "mse"
 pretrained_weights: null  # Provide path if using transfer model
 learning_rate: 0.001
+early_stopping_data_dir: "./dataset"
+window_size: 60
+predict_size: 10
+epochs: 60  #60
+batch_size: 20      #20
+model_type: "ntflstm"         # Options: "cnn", "transfer"
+criterion: "mse"
+pretrained_weights: null  # Provide path if using transfer model
+learning_rate: 0.001
 early_stopping_patience: 10
+model_save_path: "output_model/ntflstm.pth"
+patience: 10
 model_save_path: "output_model/best_model.pth"
