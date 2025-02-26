@@ -1,0 +1,8 @@
+data_dir: "./dataset/train"
+epochs: 180  #60
+batch_size: 20      #20
+model_type: "hybrid_moe"         # Options: "cnn", "transfer"
+pretrained_weights: null  # Provide path if using transfer model
+learning_rate: 0.001
+early_stopping_patience: 10
+model_save_path: "output_model/hybrid_moe.pth"

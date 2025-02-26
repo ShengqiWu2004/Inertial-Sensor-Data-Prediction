@@ -1,0 +1,9 @@
+data_dir: "./dataset"
+epochs: 80  #60
+batch_size: 20      #20
+num_classes: 6
+model_type: "cnn"         # Options: "cnn", "transfer"
+pretrained_weights: null  # Provide path if using transfer model
+learning_rate: 0.001
+early_stopping_patience: 10
+model_save_path: "output_model/best_model.pth"
