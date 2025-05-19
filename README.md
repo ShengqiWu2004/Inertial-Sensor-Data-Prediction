@@ -45,3 +45,7 @@ python main.py --config <config_name>
 ### Categorization
 The code for categorization is in the folder `./Categorization`. The best performance model is in `./models/hybrid_model.py`
 Please note that for running this code, you need to have the data within the folder.
+
+### Data Collection
+
+The code used for data collection is in ./datasetCollection
