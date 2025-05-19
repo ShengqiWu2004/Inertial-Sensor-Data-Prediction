@@ -42,3 +42,6 @@ This specifies the file path where the best-performing model (according to the v
 ```
 python main.py --config <config_name>
 ```
+### Categorization
+The code for categorization is in the folder `./Categorization`. The best performance model is in `./models/hybrid_model.py`
+Please note that for running this code, you need to have the data within the folder.
