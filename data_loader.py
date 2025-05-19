@@ -13,7 +13,7 @@ CATEGORY_KEYS = ['falldown','shaking','downstair', 'jogging', 'walking', 'upstai
 #SPECIAL_CATEGORYS = ['falldown','shaking']
 
 
-def load_and_segment_data(data_dir, window_size, predict_size, balance_config, mode="train"):
+def load_and_segment_data(data_dir, window_size, predict_size, balance_config, mode="train",step_ratio = 0.7):
     """
     Load CSV files from data_dir and segment them into input/output pairs.
     
@@ -42,7 +42,7 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
     segments_by_cat = defaultdict(list)
     targets_by_cat = defaultdict(list)
     
-    step_size = int(0.2 * window_size)
+    step_size = int(step_ratio * window_size)
     seg_length = window_size + predict_size
     
     # Process each file in the directory

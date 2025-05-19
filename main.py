@@ -8,6 +8,7 @@ from models.cnn_model import CNNModel
 from models.lstm import LSTMModel
 from models.rnn import VanillaRNNModel
 from models.ntflstm import LSTMAutoregressive
+#from models.autolstm import StepwiseLSTMModel
 from train import train_model, eval_model
 from util import plot_losses
 
@@ -58,6 +59,8 @@ def main():
                      num_features=6)
     elif config["model_type"] == "lstm":
         model = LSTMModel(input_size=6,hidden_size=config.get('hidden_size', 64), num_layers=config.get('num_layers', 2),predict_size=config['predict_size'])
+    #elif config["model_type"] == "autolstm":
+        #model = StepwiseLSTMModel(input_size=6,hidden_size=config.get('hidden_size', 64), num_layers=config.get('num_layers', 2),predict_size=config['predict_size'])
     elif config["model_type"] == "ntflstm":
         model = LSTMAutoregressive(input_size=6,hidden_size=config.get('hidden_size', 64), num_layers=config.get('num_layers', 2),predict_size=config['predict_size'])
     elif config["model_type"] == "rnn":
