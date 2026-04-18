@@ -12,7 +12,7 @@ def train_model(model, train_loader, val_loader, config, device):
     """
     epochs = config['epochs']
     learning_rate = config.get('learning_rate', 0.001)
-    patience = config.get('early_stopping_patience', 5)
+    patience = config.get('early_stopping_patience', 10)
     if(config['criterion'] == "mae"): criterion = nn.SmoothL1Loss()
     else: criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-6)

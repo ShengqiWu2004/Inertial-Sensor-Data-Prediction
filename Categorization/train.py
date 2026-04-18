@@ -62,7 +62,7 @@ def train_model(train_loader, val_loader, config, device, X_train):
     optimizer = optim.Adam(model.parameters(), lr=config.get('learning_rate', 0.001))
     num_epochs = config.get('epochs', 10)
     
-    patience = config.get('early_stopping_patience', 5)
+    patience = config.get('early_stopping_patience', 10)
     best_val_loss = float('inf')
     epochs_no_improve = 0
     best_model_state = None

@@ -1,4 +1,5 @@
 import os
+import re
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -9,31 +10,39 @@ from collections import defaultdict
 
 # These are the normal categories that will be balanced equally.
 CATEGORY_KEYS = ['falldown','shaking','downstair', 'jogging', 'walking', 'upstair']
-# This is the special category that will be sampled with a controlled ratio.
-#SPECIAL_CATEGORYS = ['falldown','shaking']
 
 
-def load_and_segment_data(data_dir, window_size, predict_size, balance_config, mode="train",step_ratio = 0.7):
+def extract_subject_id(filename):
+    """Extract subject ID (e.g., 'S1') from filename like 'S1_t1_downstair_falldown.csv'."""
+    match = re.match(r'(S\d+)_', filename, re.IGNORECASE)
+    return match.group(1).upper() if match else None
+
+
+def get_all_subjects(data_dir):
+    """Return sorted list of all unique subject IDs found in data_dir."""
+    subjects = set()
+    for f in os.listdir(data_dir):
+        if f.startswith('.'):
+            continue
+        sid = extract_subject_id(f)
+        if sid:
+            subjects.add(sid)
+    return sorted(subjects)
+
+
+def load_and_segment_data(data_dir, window_size, predict_size, balance_config,
+                          include_subjects=None, balance=True, step_ratio=0.7):
     """
     Load CSV files from data_dir and segment them into input/output pairs.
-    
-    Assumptions:
-      - Each CSV file contains 7 columns. The first column is ignored (e.g., timestamp)
-        and the remaining 6 columns are sensor readings.
-      - The file name should contain one of the keywords in CATEGORY_KEYS or SPECIAL_CATEGORY.
-      
-    Segmentation:
-      - For each file, slide a window of length (window_size + predict_size) with a step
-        size equal to 80% of window_size.
-      - For each window, the first window_size rows are used as X (input) and the following
-        predict_size rows are used as y (target).
-      
-    Balancing:
-      - For each category in CATEGORY_KEYS, only keep as many segments as the minimum count 
-        across these categories.
-      - For the SPECIAL_CATEGORY ("falldown"), keep only a fraction of the segments as given 
-        by balance_config['falldown_ratio'].
-    
+
+    Files are expected to follow the naming convention: S{n}_t{n}_{category}[_{anomaly}].csv
+    where Sn is the nth subject and tn is the nth trial.
+
+    Args:
+      include_subjects: if provided (e.g. ['S1','S3']), only load files from those subjects.
+      balance: if True, under-sample each category to the minimum count across categories.
+                if False, return all segments without balancing (used for test evaluation).
+
     Returns:
       X: np.array of shape (num_segments, window_size, 6)
       y: np.array of shape (num_segments, predict_size, 6)
@@ -41,14 +50,19 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
     """
     segments_by_cat = defaultdict(list)
     targets_by_cat = defaultdict(list)
-    
+
     step_size = int(step_ratio * window_size)
     seg_length = window_size + predict_size
-    
+
     # Process each file in the directory
     for file in os.listdir(data_dir):
         if file.startswith('.'):
             continue
+        # Filter by subject for LOSO cross-validation
+        if include_subjects is not None:
+            sid = extract_subject_id(file)
+            if sid not in include_subjects:
+                continue
         file_path = os.path.join(data_dir, file)
         try:
             df = pd.read_csv(file_path, encoding='latin1')
@@ -85,46 +99,34 @@ def load_and_segment_data(data_dir, window_size, predict_size, balance_config, m
         segments_by_cat[cat] = np.array(segments_by_cat[cat])
         targets_by_cat[cat] = np.array(targets_by_cat[cat])
     
-    # Balance the normal categories: pick the minimum count among them.
-    normal_counts = [segments_by_cat[cat].shape[0] for cat in CATEGORY_KEYS if cat in segments_by_cat]
-    if normal_counts:
-        min_normal = min(normal_counts)
-    else:
-        min_normal = 0
-
     balanced_segments = []
     balanced_targets = []
     balanced_labels = []
-    
-    # For each normal category, randomly sample min_normal segments.
-    for cat in CATEGORY_KEYS:
-        if cat in segments_by_cat:
-            seg = segments_by_cat[cat]
-            targ = targets_by_cat[cat]
-            if seg.shape[0] > min_normal:
-                idx = np.random.choice(seg.shape[0], min_normal, replace=False)
-                seg = seg[idx]
-                targ = targ[idx]
-            balanced_segments.append(seg)
-            balanced_targets.append(targ)
-            balanced_labels += [cat] * seg.shape[0]
-    
-    # For the special category, sample a fraction specified by falldown_ratio
-    # for spc in SPECIAL_CATEGORYS:
-    #     if spc in segments_by_cat:
-    #         seg = segments_by_cat[spc]
-    #         targ = targets_by_cat[spc]
-    #         ratio = balance_config.get('falldown_ratio', 1.0)  # default to 100% if not specified
-    #         num_samples = int(seg.shape[0] * ratio)
-    #         if num_samples < seg.shape[0]:
-    #             idx = np.random.choice(seg.shape[0], num_samples, replace=False)
-    #             seg = seg[idx]
-    #             targ = targ[idx]
-    #         balanced_segments.append(seg)
-    #         balanced_targets.append(targ)
-    #         balanced_labels += [spc] * seg.shape[0]
-    
-    # Concatenate all the balanced segments and shuffle the overall order.
+
+    if balance:
+        # Under-sample each category to the minimum count across categories.
+        normal_counts = [segments_by_cat[cat].shape[0] for cat in CATEGORY_KEYS if cat in segments_by_cat]
+        min_normal = min(normal_counts) if normal_counts else 0
+        for cat in CATEGORY_KEYS:
+            if cat in segments_by_cat:
+                seg = segments_by_cat[cat]
+                targ = targets_by_cat[cat]
+                if seg.shape[0] > min_normal:
+                    idx = np.random.choice(seg.shape[0], min_normal, replace=False)
+                    seg = seg[idx]
+                    targ = targ[idx]
+                balanced_segments.append(seg)
+                balanced_targets.append(targ)
+                balanced_labels += [cat] * seg.shape[0]
+    else:
+        # Return all segments unmodified (used for held-out test subjects in LOSO).
+        for cat in CATEGORY_KEYS:
+            if cat in segments_by_cat:
+                balanced_segments.append(segments_by_cat[cat])
+                balanced_targets.append(targets_by_cat[cat])
+                balanced_labels += [cat] * segments_by_cat[cat].shape[0]
+
+    # Concatenate all segments and shuffle.
     if len(balanced_segments) == 0:
         raise ValueError("No data was loaded from directory " + data_dir)
     
@@ -188,6 +190,19 @@ class SensorDataset(Dataset):
         else:
             return self.segments[idx], self.targets[idx]
 
+
+
+def train_val_split(X, y, labels, val_size=0.2, random_state=42):
+    """
+    Split data into train and validation sets (stratified by label).
+    Used within each LOSO fold to reserve 20% of training subjects' data for early stopping.
+
+    Returns: X_train, X_val, y_train, y_val, labels_train, labels_val
+    """
+    X_train, X_val, y_train, y_val, labels_train, labels_val = train_test_split(
+        X, y, labels, test_size=val_size, random_state=random_state, stratify=labels
+    )
+    return X_train, X_val, y_train, y_val, labels_train, labels_val
 
 
 def train_val_test_split(segments, targets, labels, test_size=0.2, val_size=0.4, random_state=42):
