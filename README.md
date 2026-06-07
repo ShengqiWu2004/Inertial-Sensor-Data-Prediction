@@ -6,7 +6,7 @@ This dataset is composed of sensor readings captured from an inertial measuremen
 3. Three columns containing acceleration data along the x, y, and z axes.
 
 
-The data is organized into four primary activity categories: jogging, walking, upstair, and downstair. Additionally, there is a special "falldown" category, which aggregates sensor readings from the four main activities during fall events.
+The data is organized into four primary activity categories: jogging, walking, upstair, and downstair. Additionally, there is a special "falldown" and "shaking" category, which aggregates sensor readings from the four main activities during fall or shake events.
 ### Training
 #### Configuration
 * window_size:
@@ -20,10 +20,7 @@ The number of complete passes through the training dataset.
 This defines the number of samples processed before the model's internal parameters are updated.
 
 * model_type:
-Specifies the type of model to be used. The options include:
-
-  * "cnn": Use a Convolutional Neural Network.
-  * "lstm": Use a Long Short Term Memory model.
+Specifies the type of model to be used.
 
 * criterion:
 This sets the loss function for training the model.
@@ -43,7 +40,7 @@ This specifies the file path where the best-performing model (according to the v
 python main.py --config <config_name>
 ```
 ### Categorization
-The code for categorization is in the folder `./Categorization`. The best performance model is in `./models/hybrid_model.py`
+The code for categorization is in the folder `./Categorization`. The models are in `./Categorization/models/`
 Please note that for running this code, you need to have the data within the folder.
 
 ### Data Collection
